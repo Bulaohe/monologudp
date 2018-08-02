@@ -1,0 +1,25 @@
+{
+	"name" : "bulaohe/monologudp",
+	"description" : "Laravel Monolog Udp Logger.",
+	"keywords" : [
+		"Monolog",
+		"laravel",
+		"lumen",
+		"Udp",
+		"sdk"
+	],
+	"license" : "MIT",
+	"authors" : [{
+			"name" : "Simon Quan",
+			"email" : "qqmmmqq@gmail.com"
+		}
+	],
+	"require" : {
+		"monolog/monolog" : "*"
+	},
+	"autoload" : {
+		"psr-4" : {
+			"Bulaohe\\Udplog\\" : "src"
+		}
+	}
+}
