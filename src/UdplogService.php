@@ -17,8 +17,6 @@ class UdplogService
         $this->logger(config('udplog.logger_name'));
         
         $this->setHandler();
-        
-        var_dump('testttt');
     }
     
     /**
@@ -48,8 +46,8 @@ class UdplogService
      */
     public function setHandler()
     {
-        $host = '127.0.0.1';
-        $port = '9502';
+        $host = config('udplog.host');
+        $port = config('udplog.port');
         
         $handler = app()->make(UdpHandler::class, [
             'host' => $host,
@@ -72,20 +70,16 @@ class UdplogService
      */
     public function write($context = [])
     {
-        if(empty($context)){
+        if(empty($context) || !is_array($context)){
             return false;
         }
         
-        if(isset($_SERVER['SERVER_ADDR'])) {
+        if(isset($context['flow_'])) {
             $context['ip'] = $_SERVER['SERVER_ADDR'];
-        }else if(isset($_SERVER['HOSTNAME'])) {
-            $context['ip'] = $_SERVER['HOSTNAME'];
-        }else {
-            $context['ip'] = gethostname();
         }
         
         try{
-            $this->logger->addRecord($this->level, $context);
+            $this->logger->addRecord($this->level, '', $context);
         } catch (\Throwable $e) {
             // log info
         }
@@ -95,16 +89,43 @@ class UdplogService
     /**
      * the entrance of Log, write json format log
      * 
-     * @param  string $message the description of the log
      * @param  array  $context the log details
-     * @param  string $name    set logger with given name
-     * @param  string $path    the log path
+     * $context['payload'] 日志内容
+     * $context['udplog_appid'] 日志来源
+     * $context['udplog_scene'] 日志场景
+     * $context['udplog_type'] 日志类型
+     * $context['udplog_flow_code'] 流水编码
+     * $context['udplog_channel'] 日志自定义通道－will bet bind in kibana
      * @param  int    $level   set log level
      * @return boolean
      */
     public function log($context = [], $level = Logger::WARNING)
     {
-            $this->level($level);
-            return $this->write($message, $context);
+        if(empty($context) || !is_array($context) || !isset($context['payload'])){
+            return false;
+        }
+        
+        if(!isset($context['udplog_appid'])){
+            $context['udplog_appid'] = 'udplog_default_appid';
+        }
+        
+        if(!isset($context['udplog_scene'])){
+            $context['udplog_scene'] = 'udplog_default_scene';
+        }
+        
+        if(!isset($context['udplog_type'])){
+            $context['udplog_type'] = 'udplog_default_type';
+        }
+        
+        if(!isset($context['udplog_flow_code'])){
+            $context['udplog_flow_code'] = 'code' . md5(microtime(true) . rand(0, 99999999) . rand(0, 99999999) . $this->name);
+        }
+        
+        if(!isset($context['udplog_channel'])){
+            $context['udplog_channel'] = $this->name;
+        }
+        
+        $this->level($level);
+        return $this->write($context);
     }
 }

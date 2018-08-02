@@ -22,7 +22,7 @@ class Logger extends BaseLogger
      * @param  array   $context The log context
      * @return Boolean Whether the record has been processed
      */
-    public function addRecord($level, array $context = array())
+    public function addRecord($level, $message = '', array $context = array())
     {
         if (!$this->handlers) {
             $this->pushHandler(new StreamHandler('php://stderr', static::DEBUG));
@@ -58,12 +58,22 @@ class Logger extends BaseLogger
         }
         $ts->setTimezone(static::$timezone);
 
+        if(isset($_SERVER['SERVER_ADDR'])) {
+            $ip = $_SERVER['SERVER_ADDR'];
+        }else if(isset($_SERVER['HOSTNAME'])) {
+            $ip = $_SERVER['HOSTNAME'];
+        }else {
+            $ip = gethostname();
+        }
+        
         $record = array(
             'content' => $context,
             'level' => $level,
             'level_name' => $levelName,
-            'channel' => $this->name,
+            'logger_name' => $this->name,
             'date' => date('Y/m/d H:i:s'),
+            'ip' => $ip,
+            'id' => 'code' . md5(microtime(true) . rand(0, 99999999) . rand(0, 99999999) . $this->name),
         );
 
         foreach ($this->processors as $processor) {
