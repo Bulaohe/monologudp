@@ -11,12 +11,19 @@ class UdplogService
     protected $name;
     protected $logger = null;
     protected $level = Logger::WARNING;
+    protected $hosts = [];
     
     public function __construct()
     {
         $this->logger(config('udplog.logger_name'));
         
-        $this->setHandler();
+        $host_ports = explode(',',config('udplog.host_port'));
+        foreach ($host_ports as $host_port) {
+            $this->hosts[] = explode(':', $host_port);
+        }
+        
+        $rand = rand(0, count($this->hosts) - 1);
+        $this->setHandler($this->hosts[$rand][0], $this->hosts[$rand][1]);
     }
     
     /**
@@ -44,11 +51,8 @@ class UdplogService
     /**
      * set log handler
      */
-    public function setHandler()
+    public function setHandler($host, $port)
     {
-        $host = config('udplog.host');
-        $port = config('udplog.port');
-        
         $handler = app()->make(UdpHandler::class, [
             'host' => $host,
             'port' => $port,
@@ -58,7 +62,7 @@ class UdplogService
         ]);
         
         $this->logger->pushHandler($handler);
-        $handler->setFormatter(new JsonFormatter(JsonFormatter::BATCH_MODE_NEWLINES, true));
+        $handler->setFormatter(new JsonFormatter(JsonFormatter::BATCH_MODE_JSON, false));
     }
     
     /**
