@@ -33,7 +33,7 @@ class UdplogService
      */
     public function logger($name = 'default')
     {
-        $this->name = $name ?? 'default';
+        $this->name = $name ? $name : 'default';
         $this->logger = app()->make(Logger::class, ['name'=>$this->name]);
         
     }
